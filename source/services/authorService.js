@@ -1,12 +1,14 @@
-import { authors, posts } from "./dbMock.js";
+import { query } from "../../config/dbconfig.js";
 
 export const authorService = {
   async getAll() {
-    return authors;
+    const res = await query('SELECT id, name, email, bio, created_at FROM authors ORDER BY id');
+    return res.rows;
   },
 
   async getById(id) {
-    return authors.find(a => a.id === parseInt(id));
+    const res = await query('SELECT id, name, email, bio, created_at FROM authors WHERE id = $1', [id]);
+    return res.rows[0] || null;
   },
 
   async create(data) {
@@ -16,69 +18,79 @@ export const authorService = {
       err.statusCode = 400;
       throw err;
     }
-    const exists = authors.some(a => a.email.toLowerCase() === email.toLowerCase());
-    if (exists) {
-      const err = new Error("El email ya se encuentra registrado.");
-      err.statusCode = 400;
+
+    try {
+      const res = await query(
+        'INSERT INTO authors (name, email, bio) VALUES ($1, $2, $3) RETURNING id, name, email, bio, created_at',
+        [name, email, bio || null]
+      );
+      return res.rows[0];
+    } catch (err) {
+      // Postgres unique violation
+      if (err && err.code === '23505') {
+        const e = new Error('El email ya se encuentra registrado.');
+        e.statusCode = 400;
+        throw e;
+      }
       throw err;
     }
-    const newAuthor = {
-      id: authors.length > 0 ? Math.max(...authors.map(a => a.id)) + 1 : 1,
-      name,
-      email,
-      bio: bio || null,
-      created_at: new Date().toISOString()
-    };
-    authors.push(newAuthor);
-    return newAuthor;
   },
 
   async update(id, data) {
-    const author = authors.find(a => a.id === parseInt(id));
-    if (!author) return null;
+    const existing = await this.getById(id);
+    if (!existing) return null;
 
     const { name, email, bio } = data;
-    
+
     if (name !== undefined && !name.trim()) {
-      const err = new Error("El nombre no puede estar vacío.");
+      const err = new Error('El nombre no puede estar vacío.');
       err.statusCode = 400;
       throw err;
     }
     if (email !== undefined && !email.trim()) {
-      const err = new Error("El email no puede estar vacío.");
+      const err = new Error('El email no puede estar vacío.');
       err.statusCode = 400;
       throw err;
     }
 
-    if (email && email.toLowerCase() !== author.email.toLowerCase()) {
-      const exists = authors.some(a => a.email.toLowerCase() === email.toLowerCase());
-      if (exists) {
-        const err = new Error("El email ya se encuentra registrado por otro autor.");
+    if (email && email.toLowerCase() !== existing.email.toLowerCase()) {
+      const check = await query('SELECT 1 FROM authors WHERE lower(email) = lower($1) AND id <> $2', [email, id]);
+      if (check.rowCount > 0) {
+        const err = new Error('El email ya se encuentra registrado por otro autor.');
         err.statusCode = 400;
         throw err;
       }
-      author.email = email;
     }
-    
-    if (name !== undefined) author.name = name;
-    if (bio !== undefined) author.bio = bio;
 
-    return author;
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    if (name !== undefined) {
+      fields.push(`name = $${idx++}`);
+      values.push(name);
+    }
+    if (email !== undefined) {
+      fields.push(`email = $${idx++}`);
+      values.push(email);
+    }
+    if (bio !== undefined) {
+      fields.push(`bio = $${idx++}`);
+      values.push(bio);
+    }
+
+    if (fields.length === 0) {
+      // nothing to update
+      return existing;
+    }
+
+    values.push(id); // for WHERE
+    const q = `UPDATE authors SET ${fields.join(', ')} WHERE id = $${idx} RETURNING id, name, email, bio, created_at`;
+    const res = await query(q, values);
+    return res.rows[0];
   },
 
   async delete(id) {
-    const index = authors.findIndex(a => a.id === parseInt(id));
-    if (index === -1) return false;
-
-    const authorId = authors[index].id;
-    // Borrado en cascada de los posts asociados en memoria
-    for (let i = posts.length - 1; i >= 0; i--) {
-      if (posts[i].author_id === authorId) {
-        posts.splice(i, 1);
-      }
-    }
-
-    authors.splice(index, 1);
-    return true;
+    const res = await query('DELETE FROM authors WHERE id = $1 RETURNING id', [id]);
+    return res.rowCount > 0;
   }
 };
