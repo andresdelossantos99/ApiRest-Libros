@@ -1,0 +1,38 @@
+openapi: 3.1.1
+info:
+  title: Blog API
+  version: 1.0.0
+  description: API REST para gestionar autores y post de un Blog
+
+servers:
+  - url: http:\\localhost:3000
+    description: Desarollo local
+ -  url: 
+    description: Produccion
+
+
+:hs:
+`authors:
+  get:
+    summary: Obtener todos los autores
+    description: Devuelve la lista completa de autores ordenados por nombre
+    tags:
+      - autores
+    responses:
+      '200':
+        description: Lista de autores
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+               $ref: '#/components/schemas/Author'
+components:
+  schemas:
+    Author:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Nombre completo del autores
+          
