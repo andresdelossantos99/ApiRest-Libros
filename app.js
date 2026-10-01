@@ -12,7 +12,7 @@ app.get("/api/health", (req, res) => {
     message: "API funcionando correctamente",
   });
 });
-// Montar rutas
+// Montar rutass
 app.use("/api/authors", authorRoutes);
 app.use("/api/posts", postRoutes);
 app.use((req, res) => {
