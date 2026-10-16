@@ -1,2 +1,5 @@
+# dependencias
 node_modules
+
+# entorno
 .env

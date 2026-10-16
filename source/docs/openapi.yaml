@@ -6,8 +6,8 @@ info:
     API REST para la gestión integral de autores y sus publicaciones de blog.
     Desarrollada con Node.js, Express y PostgreSQL.
 servers:
-  - url: http://localhost:3000/api
-    description: Servidor de desarrollo local
+  - url: /api
+    description: API del servidor actual
 
 tags:
   - name: Estado
