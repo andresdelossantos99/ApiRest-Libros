@@ -1,32 +1,399 @@
-openapi: 3.1.1
+openapi: 3.0.3
 info:
-  title: Blog API
+  title: API REST de Libros y Autores
   version: 1.0.0
-  description: API REST para gestionar autores y post de un Blog
-
+  description: >
+    API REST para la gestión integral de autores y sus publicaciones de blog.
+    Desarrollada con Node.js, Express y PostgreSQL.
 servers:
-  - url: http:\\localhost:3000
-    description: Desarollo local
- -  url: 
-    description: Produccion
+  - url: http://localhost:3000/api
+    description: Servidor de desarrollo local
 
+tags:
+  - name: Estado
+    description: Verificación de salud y disponibilidad del servicio
+  - name: Autores
+    description: Operaciones CRUD para autores y sus recursos asociados
+  - name: Publicaciones
+    description: Operaciones CRUD para publicaciones, filtros y paginación
 
-:hs:
-`authors:
-  get:
-    summary: Obtener todos los autores
-    description: Devuelve la lista completa de autores ordenados por nombre
-    tags:
-      - autores
-    responses:
-      '200':
-        description: Lista de autores
+paths:
+  /health:
+    get:
+      tags:
+        - Estado
+      summary: Comprobar estado de la API
+      description: Devuelve el estado operativo actual de la API.
+      responses:
+        '200':
+          description: Servicio funcionando correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: API funcionando correctamente
+
+  /authors:
+    get:
+      tags:
+        - Autores
+      summary: Obtener lista de autores
+      description: Devuelve la lista completa de todos los autores registrados en la base de datos.
+      responses:
+        '200':
+          description: Lista de autores obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Author'
+
+    post:
+      tags:
+        - Autores
+      summary: Crear un nuevo autor
+      description: Registra un nuevo autor en la base de datos con validación de email único.
+      requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-               $ref: '#/components/schemas/Author'
+              $ref: '#/components/schemas/CreateAuthorDTO'
+      responses:
+        '201':
+          description: Autor creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          description: Datos de entrada inválidos o faltantes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto, el correo electrónico ya está registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /authors/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador numérico único del autor
+        schema:
+          type: integer
+          minimum: 1
+          example: 1
+
+    get:
+      tags:
+        - Autores
+      summary: Obtener autor por ID
+      description: Retorna la información de un autor específico según su ID.
+      responses:
+        '200':
+          description: Autor encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          description: ID inválido (no es un entero positivo)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Autor no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Autores
+      summary: Actualizar datos de un autor
+      description: Actualiza de forma dinámica uno o más campos (nombre, email, biografía) de un autor.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAuthorDTO'
+      responses:
+        '200':
+          description: Autor actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+        '400':
+          description: Datos de entrada inválidos o sin campos a actualizar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Autor no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: El correo electrónico ya pertenece a otro autor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Autores
+      summary: Eliminar autor
+      description: Elimina un autor de la base de datos y sus publicaciones asociadas en cascada (ON DELETE CASCADE).
+      responses:
+        '200':
+          description: Autor y publicaciones asociadas eliminados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Autor no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /authors/{id}/posts:
+    get:
+      tags:
+        - Autores
+      summary: Listar publicaciones de un autor
+      description: Retorna todas las publicaciones que pertenecen al autor especificado.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del autor del cual obtener los posts
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: Lista de publicaciones del autor
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+        '400':
+          description: ID de autor inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Autor no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /posts:
+    get:
+      tags:
+        - Publicaciones
+      summary: Listar publicaciones con filtros y paginación
+      description: Obtiene publicaciones ordenadas por ID, con soporte de filtrado relacional y paginación.
+      parameters:
+        - name: author_id
+          in: query
+          required: false
+          description: Filtrar por identificador de autor
+          schema:
+            type: integer
+            example: 1
+        - name: published
+          in: query
+          required: false
+          description: Filtrar por estado de publicación (true o false)
+          schema:
+            type: boolean
+            example: true
+        - name: limit
+          in: query
+          required: false
+          description: Cantidad máxima de registros a retornar (1 a 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+        - name: page
+          in: query
+          required: false
+          description: Número de página para la paginación (inicia en 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+      responses:
+        '200':
+          description: Lista de publicaciones obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+        '400':
+          description: Parámetros de consulta inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Publicaciones
+      summary: Crear una nueva publicación
+      description: Registra una nueva publicación asociada a un autor existente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostDTO'
+      responses:
+        '201':
+          description: Publicación creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Datos de entrada inválidos o autor inexistente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /posts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador numérico único de la publicación
+        schema:
+          type: integer
+          minimum: 1
+          example: 1
+
+    get:
+      tags:
+        - Publicaciones
+      summary: Obtener publicación por ID
+      description: Retorna la información de una publicación incluyendo los datos de su autor.
+      responses:
+        '200':
+          description: Publicación encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Publicación no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Publicaciones
+      summary: Actualizar una publicación
+      description: Actualiza de forma dinámica uno o más campos (título, contenido, estado publicado, autor).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePostDTO'
+      responses:
+        '200':
+          description: Publicación actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Datos de entrada inválidos o autor inexistente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Publicación no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Publicaciones
+      summary: Eliminar una publicación
+      description: Elimina una publicación de la base de datos por su ID.
+      responses:
+        '200':
+          description: Publicación eliminada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: ID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Publicación no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     Author:
@@ -34,5 +401,146 @@ components:
       properties:
         id:
           type: integer
-          description: Nombre completo del autores
-          
+          example: 1
+        name:
+          type: string
+          example: George Orwell
+        email:
+          type: string
+          format: email
+          example: george.orwell@example.com
+        bio:
+          type: string
+          nullable: true
+          example: Novelista, ensayista y crítico británico.
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-07-28T00:17:56.936Z"
+      required:
+        - id
+        - name
+        - email
+        - created_at
+
+    CreateAuthorDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Gabriel García Márquez
+        email:
+          type: string
+          format: email
+          example: gabo@example.com
+        bio:
+          type: string
+          example: Escritor y periodista colombiano, premio Nobel de Literatura.
+      required:
+        - name
+        - email
+
+    UpdateAuthorDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Jane Austen
+        email:
+          type: string
+          format: email
+          example: jane.austen@example.com
+        bio:
+          type: string
+          example: Destacada novelista británica del siglo XIX.
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        author_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: 1984
+        content:
+          type: string
+          example: Una novela de ciencia ficción distópica y sátira política.
+        published:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-07-28T00:17:56.936Z"
+        author_name:
+          type: string
+          example: George Orwell
+        author_email:
+          type: string
+          format: email
+          example: george.orwell@example.com
+      required:
+        - id
+        - author_id
+        - title
+        - content
+        - published
+        - created_at
+
+    CreatePostDTO:
+      type: object
+      properties:
+        author_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Rebelión en la granja
+        content:
+          type: string
+          example: Fábula alegórica que narra la historia de los animales de una granja.
+        published:
+          type: boolean
+          default: false
+          example: true
+      required:
+        - author_id
+        - title
+        - content
+
+    UpdatePostDTO:
+      type: object
+      properties:
+        author_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: 1984 (Edición Revisada)
+        content:
+          type: string
+          example: Contenido actualizado de la novela.
+        published:
+          type: boolean
+          example: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Mensaje descriptivo del error
+        detail:
+          type: string
+          example: Información adicional del sistema o base de datos
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Operación realizada con éxito
