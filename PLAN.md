@@ -10,8 +10,8 @@ Lista de tareas para completar el desarrollo, migración y robustecimiento de la
 - [x] Migración inicial de Autores a PostgreSQL ([source/services/authorService.js](file:///c:/Users/Andy/Desktop/apilibros/ApiRest-Libros/source/services/authorService.js))
 - [x] Conexión a Base de Datos unificada y carga robusta de variables `.env`
 - [x] Migración del servicio de Publicaciones ([source/services/postService.js](file:///c:/Users/Andy/Desktop/apilibros/ApiRest-Libros/source/services/postService.js)) a PostgreSQL
-- [ ] Filtros avanzados, paginación y sub-recursos relacionales (`/api/authors/:id/posts`)
-- [ ] Validaciones y manejo centralizado de errores (evitar errores 500 no capturados)
+- [x] Filtros avanzados, paginación y sub-recursos relacionales (`/api/authors/:id/posts`)
+- [x] Validaciones y manejo centralizado de errores (evitar errores 500 no capturados)
 - [ ] Documentación interactiva de la API con Swagger / OpenAPI (`/api/docs`)
 - [ ] Suite de pruebas automatizadas de integración (`npm test`)
 
@@ -37,20 +37,20 @@ Lista de tareas para completar el desarrollo, migración y robustecimiento de la
 - [x] **Ajustar [source/controllers/postController.js](file:///c:/Users/Andy/Desktop/apilibros/ApiRest-Libros/source/controllers/postController.js)** para respuestas acordes.
 
 ### Fase 3: Filtros, Relaciones y Rutas Centralizadas
-- [ ] **Filtros en `GET /api/posts`**:
+- [x] **Filtros en `GET /api/posts`**:
   - Filtrar por autor: `?author_id=...`
   - Filtrar por estado de publicación: `?published=true|false`
   - Soporte de paginación básica: `?limit=10&page=1`
-- [ ] **Ruta relacional anidada**:
+- [x] **Ruta relacional anidada**:
   - `GET /api/authors/:id/posts`: Listar publicaciones de un autor específico.
-- [ ] **Centralización de rutas en [source/routes/indexRoutes.js](file:///c:/Users/Andy/Desktop/apilibros/ApiRest-Libros/source/routes/indexRoutes.js)**:
+- [x] **Centralización de rutas en [source/routes/indexRoutes.js](file:///c:/Users/Andy/Desktop/apilibros/ApiRest-Libros/source/routes/indexRoutes.js)**:
   - Agrupar `/health`, `/authors`, `/posts` y montarlo bajo `/api` en [app.js](file:///c:/Users/Andy/Desktop/apilibros/ApiRest-Libros/app.js).
 
 ### Fase 4: Validaciones y Manejo Centralizado de Errores
-- [ ] **Middleware de validación de parámetros y payloads**:
+- [x] **Middleware de validación de parámetros y payloads**:
   - Validar que `:id` sea un entero positivo (evita error `22P02` de PostgreSQL).
   - Validar datos obligatorios y formato de email.
-- [ ] **Manejador global de errores**:
+- [x] **Manejador global de errores**:
   - Mapear códigos de error de Postgres:
     - `23505` (duplicado) ➔ `400`/`409 Conflict`
     - `23503` (foreign key inexistente) ➔ `400 Bad Request`

@@ -1,5 +1,6 @@
 import express from "express";
 import apiRoutes from "./source/routes/indexRoutes.js";
+import { errorHandler } from "./source/middlewares/errorHandler.js";
 
 const app = express();
 
@@ -15,12 +16,7 @@ app.use((req, res) => {
   });
 });
 
-// Middleware básico para manejo global de errores (se potenciará en la Fase 4)
-app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    error: err.message || "Error interno del servidor.",
-  });
-});
+// Middleware centralizado de errores
+app.use(errorHandler);
 
 export default app;

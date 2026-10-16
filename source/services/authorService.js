@@ -29,7 +29,7 @@ export const authorService = {
       // Postgres unique violation
       if (err && err.code === '23505') {
         const e = new Error('El email ya se encuentra registrado.');
-        e.statusCode = 400;
+        e.statusCode = 409;
         throw e;
       }
       throw err;
@@ -57,7 +57,7 @@ export const authorService = {
       const check = await query('SELECT 1 FROM authors WHERE lower(email) = lower($1) AND id <> $2', [email, id]);
       if (check.rowCount > 0) {
         const err = new Error('El email ya se encuentra registrado por otro autor.');
-        err.statusCode = 400;
+        err.statusCode = 409;
         throw err;
       }
     }
