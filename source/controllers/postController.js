@@ -3,7 +3,7 @@ import { postService } from "../services/postService.js";
 export const postController = {
   async getAll(req, res, next) {
     try {
-      const postsList = await postService.getAll();
+      const postsList = await postService.getAll(req.query);
       res.status(200).json(postsList);
     } catch (err) {
       next(err);

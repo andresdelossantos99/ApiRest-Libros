@@ -1,4 +1,4 @@
-import { query } from "../../config/dbconfig.js";
+import { query } from "../dbConfig/db.js";
 
 export const authorService = {
   async getAll() {

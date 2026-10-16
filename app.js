@@ -1,20 +1,14 @@
 import express from "express";
-import authorRoutes from "./source/routes/authorRoutes.js";
-import postRoutes from "./source/routes/postRoutes.js";
+import apiRoutes from "./source/routes/indexRoutes.js";
 
 const app = express();
 
 app.use(express.json());
 
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    message: "API funcionando correctamente",
-  });
-});
-// Montar rutass
-app.use("/api/authors", authorRoutes);
-app.use("/api/posts", postRoutes);
+// Montar todas las rutas de la API bajo /api
+app.use("/api", apiRoutes);
+
+// Manejador 404 para rutas no encontradas
 app.use((req, res) => {
   res.status(404).json({
     error: "Ruta no encontrada",

@@ -1,4 +1,5 @@
 import { authorService } from "../services/authorService.js";
+import { postService } from "../services/postService.js";
 
 export const authorController = {
   async getAll(req, res, next) {
@@ -18,6 +19,20 @@ export const authorController = {
         return res.status(404).json({ error: "Autor no encontrado." });
       }
       res.status(200).json(author);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getPosts(req, res, next) {
+    try {
+      const { id } = req.params;
+      const author = await authorService.getById(id);
+      if (!author) {
+        return res.status(404).json({ error: "Autor no encontrado." });
+      }
+      const posts = await postService.getByAuthorId(id);
+      res.status(200).json(posts);
     } catch (err) {
       next(err);
     }

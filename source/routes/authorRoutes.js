@@ -5,6 +5,7 @@ const router = Router();
 
 router.get("/", authorController.getAll);
 router.get("/:id", authorController.getById);
+router.get("/:id/posts", authorController.getPosts);
 router.post("/", authorController.create);
 router.put("/:id", authorController.update);
 router.delete("/:id", authorController.delete);
